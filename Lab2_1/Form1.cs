@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
@@ -12,6 +13,8 @@ namespace Lab2_1
     {
         private readonly List<Control> RequiredControls;
         private readonly List<Person> Persons;
+
+        private DataTable _personsDataTable;
 
         private readonly PersonsSerializer _personsSerializer;
 
@@ -30,7 +33,9 @@ namespace Lab2_1
             };
             _personsSerializer = new PersonsSerializer();
             Persons = _personsSerializer.DeserializePersons();
-            FillListViewPersons();
+            InitializePersonsDataTable();
+            dataGridView1.DataSource = _personsDataTable;
+            dataGridView1.ReadOnly = true;
         }
 
         private void buttonSave_Click(object sender, EventArgs e)
@@ -52,7 +57,7 @@ namespace Lab2_1
             };
 
             Persons.Add(newPerson);
-            FillListViewPersons();
+            AddPersonToDataTable(newPerson);
             RequiredControls.ForEach(c => c.Text = string.Empty);
         }
 
@@ -77,7 +82,7 @@ namespace Lab2_1
 
         private void HighlightEmptyControl(Control control)
         {
-            control.ForeColor = Color.Red;
+            control.BackColor = Color.Red;
             control.Refresh();
         }
 
@@ -129,23 +134,46 @@ namespace Lab2_1
             _personsSerializer.SerializePersons(Persons);
         }
 
-        private void FillListViewPersons()
+        private void InitializePersonsDataTable()
         {
-            var items = new List<ListViewItem>();
+            _personsDataTable = new DataTable();
+            _personsDataTable.Columns.Add("Номер билета", typeof(string));
+            _personsDataTable.Columns.Add("Фамилия", typeof(string));
+            _personsDataTable.Columns.Add("Имя", typeof(string));
+            _personsDataTable.Columns.Add("Отчество", typeof(string));
+            _personsDataTable.Columns.Add("Дата рождения", typeof(string));
+            _personsDataTable.Columns.Add("Пол", typeof(string));
+            _personsDataTable.Columns.Add("Дата выдачи", typeof(string));
+            _personsDataTable.Columns.Add("Место выдачи", typeof(string));
+
             foreach (var person in Persons)
             {
-                var item = new ListViewItem(person.Id.ToString());
-                item.SubItems.Add(person.Surname);
-                item.SubItems.Add(person.Name);
-                item.SubItems.Add(person.Patronymic);
-                item.SubItems.Add(person.BirthDate.ToShortDateString());
-                item.SubItems.Add(person.Gender.GetDescription());
-                item.SubItems.Add(person.IssueDate.ToShortDateString());
-                item.SubItems.Add(person.IssuePlace);
-                items.Add(item);
+                AddPersonToDataTable(person);
             }
-            listViewPersons.Clear();
-            listViewPersons.Items.AddRange(items.ToArray());
+        }
+
+        private void AddPersonToDataTable(Person person)
+        {
+            var item = new object[]
+            {
+                person.Id.ToString(),
+                person.Surname,
+                person.Name,
+                person.Patronymic,
+                person.BirthDate.ToShortDateString(),
+                person.Gender.GetDescription(),
+                person.IssueDate.ToShortDateString(),
+                person.IssuePlace,
+            };
+            _personsDataTable.Rows.Add(item);
+        }
+
+        private void control_TextChanged(object sender, EventArgs e)
+        {
+            var control = (Control)sender;
+
+            control.BackColor = Color.White;
+            control.Refresh();
         }
     }
 }
